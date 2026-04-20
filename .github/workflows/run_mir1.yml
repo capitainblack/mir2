@@ -1,0 +1,38 @@
+name: Collect V2Ray Configs
+
+on:
+  schedule:
+    # Каждые 6 часов
+    - cron: "0 */1 * * *"
+  workflow_dispatch:   # Запуск вручную из вкладки Actions
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # нужно для git push
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run collector
+        run: python mir2.py
+
+      - name: Commit & push if configs changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add configs/all_configs.txt
+          # Коммитим только если есть изменения
+          git diff --cached --quiet || \
+            git commit -m "chore: update configs [$(date -u '+%Y-%m-%d %H:%M UTC')]"
+          git push
